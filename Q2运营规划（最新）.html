@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Q2运营规划</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+  @page { size: A3 landscape; margin: 0; }
+  @media print {
+    .highlight, .selection, .overlay, .mask,
+    [style*="background-color: rgba("],
+    [style*="background: rgba("],
+    [style*="opacity: 0."] {
+      background-color: transparent !important;
+      opacity: 1 !important;
+    }
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html { margin: 0; padding: 0; }
+  body {
+    width: 420mm;            /* A3 横版宽（≈1587px @96dpi） */
+    height: 297mm;           /* A3 横版高（≈1123px @96dpi） */
+    margin: 0 auto;
+    font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(145deg, #fff8f5 0%, #fef0ec 25%, #fde8e0 50%, #fce4da 75%, #f9d8cc 100%);
+    overflow: hidden;        /* 锁死在一页 A3 内，不产生滚动/分页 */
+    padding: 22px 36px 24px;
+    color: #4a3530;
+    display: flex;           /* 让 header + main-layout 纵向自适应分配空间 */
+    flex-direction: column;
+  }
+
+  /* ===== 顶部标题区 ===== */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    flex-shrink: 0;          /* 标题区固定高度 */
+  }
+  .header-left h1 {
+    font-size: 45px;
+    font-weight: 500;
+    color: #d4614a;
+    letter-spacing: 3px;
+  }
+  .header-left .subtitle {
+    font-size: 18px;
+    color: #b87a6a;
+    margin-top: 6px;
+    font-weight: 400;
+    letter-spacing: 1px;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .header-tag {
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 18px;
+    font-weight: 500;
+    color: #d4614a;
+    background: rgba(255,255,255,0.6);
+    border: 1px solid rgba(212,97,74,0.2);
+  }
+
+  /* ===== 三栏主布局 ===== */
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #5c4440;
+    font-weight: 500;
+  }
+  .legend-square {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .legend-white {
+    background: rgba(255,255,255,0.88);
+    border: 1px solid rgba(180,100,80,0.3);
+  }
+  .legend-blue {
+    background: rgba(90,138,176,0.15);
+    border: 1px solid rgba(90,138,176,0.3);
+  }
+  .legend-coral {
+    background: rgba(212,97,74,0.15);
+    border: 1px solid rgba(212,97,74,0.3);
+  }
+  .method-legend {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 8px;
+  }
+  .main-layout {
+    display: flex;
+    gap: 14px;
+    flex: 1;                 /* 占据除标题外所有剩余高度 */
+    min-height: 0;           /* 允许子元素内部滚动/压缩，防止溢出 */
+  }
+
+  /* 左侧 */
+  .col-left {
+    width: 290px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* 中间 */
+  .col-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+  }
+
+  /* 右栏 */
+  .col-right {
+    width: 330px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;              /* 14→ 12，收紧纵向密度 */
+    min-height: 0;
+    overflow: hidden;       /* 安全网：防止例外溢出超出 timeline-bar 底线 */
+  }
+
+  /* ===== 区块标签 ===== */
+  .section-label {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    height: 54px;                  /* 固定高度，三栏标签完全一致（以中栏运营计划为准） */
+    padding: 0 22px;               /* 去掉垂直 padding，改由 height + align-items 控制 */
+    line-height: 1;                /* 锁定行高，避免emoji与中文混排高度偏差 */
+    border-radius: 12px;
+    text-align: center;
+    letter-spacing: 2px;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  }
+  .section-label::after {
+    content: "";
+    position: absolute;
+    top: -20px; right: -20px;
+    width: 60px; height: 60px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+  }
+  .label-coral { background: linear-gradient(135deg, #e8795e, #d4614a); }
+  .label-rose { background: linear-gradient(135deg, #e06868, #cc5252); }
+  .label-warm { background: linear-gradient(135deg, #e89560, #d97a45); }
+
+  /* ===== 白色卡片 ===== */
+  .card {
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(8px);
+    border-radius: 14px;
+    padding: 26px;
+    box-shadow: 0 2px 12px rgba(180,100,80,0.08);
+    border: 1px solid rgba(255,255,255,0.6);
+    transition: all 0.3s ease;
+  }
+  .card:hover {
+    box-shadow: 0 6px 20px rgba(180,100,80,0.12);
+    transform: translateY(-2px);
+  }
+  .card-flex { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+  .card h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #d4614a;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #fce4da;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card h3 .icon-dot {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    background: #d4614a;
+    flex-shrink: 0;
+  }
+  .card h3 .h-emoji { font-size: 20px; }
+
+  .card ul {
+    list-style: none;
+    padding: 0;
+  }
+  .card ul li {
+    font-size: 16px;
+    color: #5c4440;
+    line-height: 1.7;
+    padding-left: 16px;
+    position: relative;
+  }
+  .card ul li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #e8a090;
+  }
+  .card p {
+    font-size: 16px;
+    color: #5c4440;
+    line-height: 1.7;
+  }
+
+  .highlight-box {
+    background: linear-gradient(135deg, #fef5f0, #fdeee6);
+    border-radius: 10px;
+    padding: 12px 14px;
+    border-left: 3px solid #d4614a;
+    font-size: 15px;
+    color: #c0563f;
+    font-weight: 600;
+    line-height: 1.7;
+  }
+
+  /* ===== 核心方法论4步 ===== */
+  .method-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .method-header .badge {
+    font-size: 12px;
+    background: rgba(255,255,255,0.3);
+    padding: 3px 12px;
+    border-radius: 10px;
+  }
+
+  .method-flow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: auto 1fr 1fr 1fr;   /* 首行按内容，下三3行等分剩余高度 */
+    grid-auto-flow: column;
+    gap: 14px;
+    flex: 1;                                /* 占据中栏剩余空间，把 q2-plan / timeline-bar 推到底部 */
+    min-height: 0;
+  }
+
+  .method-module { display: contents; }
+
+  /* 子模块内容顶部对齐，标题和标签紧贴卡片上缘 */
+  .method-flow .sub-module {
+    justify-content: flex-start;
+  }
+
+  /* 步骤头部 */
+  .module-header {
+    border-radius: 12px;
+    padding: 16px 20px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+  }
+  .module-header::after {
+    content: "";
+    position: absolute;
+    top: -15px; right: -15px;
+    width: 50px; height: 50px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 50%;
+  }
+  .module-header::before {
+    content: "";
+    position: absolute;
+    bottom: -10px; right: 20px;
+    width: 30px; height: 30px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+  }
+  .mh1 { background: linear-gradient(135deg, #e8795e, #d4614a); }
+  .mh2 { background: linear-gradient(135deg, #e06868, #cc5252); }
+  .mh3 { background: linear-gradient(135deg, #c97dbd, #b260a5); }
+  .mh4 { background: linear-gradient(135deg, #d97a45, #c46535); }
+
+  .module-header .mh-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .module-header .mh-step {
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0.8;
+    letter-spacing: 1px;
+  }
+  .module-header .mh-icon {
+    width: 24px; height: 24px;
+    opacity: 0.7;
+  }
+  .module-header .mh-arrow {
+    font-size: 18px;
+    opacity: 0.5;
+  }
+  .module-header .mh-title {
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    margin-top: 4px;
+  }
+  .module-header .mh-desc {
+    font-size: 13px;
+    opacity: 0.85;
+    margin-top: 4px;
+    font-weight: 400;
+  }
+
+  /* 子模块卡片 */
+  .sub-module {
+    background: rgba(255,255,255,0.92);
+    border-radius: 10px;
+    padding: 10px 12px;
+    box-shadow: 0 1px 6px rgba(180,100,80,0.06);
+    border: 1px solid rgba(255,255,255,0.7);
+    display: flex;
+    flex-direction: column;
+    transition: all 0.25s ease;
+  }
+  .sub-module:hover {
+    box-shadow: 0 4px 14px rgba(180,100,80,0.1);
+    transform: translateY(-1px);
+  }
+  .sub-module .sm-label {
+    font-size: 16px;
+    font-weight: 700;
+    color: #5c4440;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sub-module .sm-label .sm-dot {
+    width: 10px; height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .dot1 { background: #e8795e; }
+  .dot2 { background: #e06868; }
+  .dot3 { background: #c97dbd; }
+  .dot4 { background: #d97a45; }
+
+  .sub-module .sm-text {
+    font-size: 13px;
+    color: #7a5f58;
+    line-height: 1.5;
+  }
+
+  .sub-module .sm-highlight {
+    margin-top: 6px;
+    background: linear-gradient(135deg, #fef5f0, #fdeee6);
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.6;
+  }
+  .sm-highlight.hl1 { color: #d4614a; }
+  .sm-highlight.hl2 { color: #cc5252; }
+  .sm-highlight.hl3 { color: #b260a5; }
+  .sm-highlight.hl4 { color: #c46535; }
+
+  .txt-yellow { color: #5a8ab0; font-weight: 600; }
+  .txt-pink { color: #6a9e7a; font-weight: 600; }
+
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 8px;            /* 缩小间距，让两个短标签能同行 */
+  }
+  .tag {
+    display: inline-block;
+    padding: 4px 9px;        /* 缩小内边距 */
+    border-radius: 10px;
+    font-size: 12px;         /* 由 15px 缩小至 12px */
+    background: rgba(255,255,255,0.65);
+    border: 1px solid rgba(180,100,80,0.15);
+    color: #7a5f58;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .tag.tag-yellow {
+    color: #5a8ab0;
+    background: rgba(90,138,176,0.08);
+    border-color: rgba(90,138,176,0.2);
+    font-weight: 400;
+  }
+  .tag.tag-pink {
+    color: #d4614a;
+    background: rgba(212,97,74,0.08);
+    border-color: rgba(212,97,74,0.2);
+    font-weight: 400;
+  }
+
+  .module-arrow { display: none; }
+
+  /* ===== Q2执行计划 ===== */
+  .q2-plan {
+    background: rgba(255,255,255,0.88);
+    border-radius: 14px;
+    padding: 18px 24px;
+    box-shadow: 0 2px 12px rgba(180,100,80,0.08);
+    border: 1px solid rgba(255,255,255,0.6);
+    flex-shrink: 0;
+  }
+  .q2-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #d97a45;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .q2-desc {
+    font-size: 15px;
+    color: #7a5f58;
+    line-height: 1.6;
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    background: rgba(212,97,74,0.06);
+    border-radius: 6px;
+    border-left: 3px solid #d97a45;
+  }
+  .q2-desc strong {
+    color: #d97a45;
+  }
+  .q2-title .q2-icon {
+    background: linear-gradient(135deg, #d97a45, #cc6a35);
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .q2-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    align-items: stretch;
+  }
+  .q2-item {
+    background: linear-gradient(160deg, #fef8f4, #fdf0e8);
+    border-radius: 12px;
+    padding: 12px 16px;
+    border-top: 3px solid;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: default;
+  }
+  .q2-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(180,100,80,0.14);
+  }
+  .q2-item:nth-child(1) { border-color: #e8795e; }
+  .q2-item:nth-child(2) { border-color: #e06868; }
+  .q2-item:nth-child(3) { border-color: #c97dbd; }
+  .q2-item:nth-child(4) { border-color: #d97a45; }
+
+  .q2-item h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #5c4440;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .q2-item h4 .q2-emoji { font-size: 26px; }
+  .q2-item ul {
+    list-style: none;
+    padding: 0;
+    flex: 1;
+  }
+  .q2-item ul li {
+    font-size: 13px;
+    color: #7a5f58;
+    line-height: 1.5;
+    padding-left: 14px;
+    position: relative;
+  }
+  .q2-item ul li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: #d4917a;
+    font-size: 11px;
+  }
+  .q2-item ul li strong {
+    color: #5c4440;
+    font-weight: 700;
+  }
+
+  /* ===== 时间线 ===== */
+  .timeline-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 24px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 10px;
+    font-size: 16px;
+    color: #7a5f58;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(180,100,80,0.06);
+  }
+  .timeline-bar .t-node {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;          /* 节点不被压缩 */
+  }
+  .timeline-bar .t-dot {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e8795e, #d4614a);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .timeline-bar .t-text {
+    font-weight: 600;
+    color: #5c4440;
+    white-space: nowrap;     /* 强制单行，不换行 */
+  }
+  .timeline-bar .t-arrow {
+    color: #d4917a;
+    font-size: 18px;
+    letter-spacing: -1px;    /* 破折缩紧，避免箭头过宽挤压文案 */
+    white-space: nowrap;
+  }
+
+  /* ===== 右侧效果卡片 ===== */
+  .result-card {
+    background: rgba(255,255,255,0.9);
+    border-radius: 12px;
+    padding: 18px 22px;       /* 26→18，大幅压缩内边距 */
+    box-shadow: 0 2px 10px rgba(180,100,80,0.06);
+    border: 1px solid rgba(255,255,255,0.6);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;  /* 内容垂直居中，视觉更平衡 */
+    flex: 1;                  /* 所有卡片等高分配 col-right 的剩余高度 */
+    min-height: 0;            /* 允许 flex 压缩，避免溢出 */
+  }
+  .result-card:hover {
+    box-shadow: 0 6px 18px rgba(180,100,80,0.1);
+    transform: translateY(-2px);
+  }
+  .result-card.flex1 { flex: 1; }
+
+  .result-card h3 {
+    font-size: 17px;              /* 20→17 */
+    font-weight: 700;
+    color: #5c4440;
+    margin-bottom: 6px;           /* 10→6 */
+    padding-bottom: 5px;          /* 8→5 */
+    border-bottom: 2px solid #fce4da;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .result-card h3 .r-dot {
+    width: 11px; height: 11px;    /* 12→11 */
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .metric-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 6px 0;               /* 10→6 */
+    border-bottom: 1px dashed #f0ddd5;
+  }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-row .m-label {
+    font-size: 14px;              /* 16→14 */
+    color: #7a5f58;
+  }
+  .metric-row .m-value {
+    font-size: 22px;              /* 26→22 */
+    font-weight: 900;
+  }
+  .mv-coral { color: #d4614a; }
+  .mv-rose { color: #cc5252; }
+  .mv-purple { color: #b86aab; }
+  .mv-warm { color: #d97a45; }
+
+  .result-text {
+    font-size: 14px;
+    color: #5c4440;
+    line-height: 1.8;
+    padding: 4px 0;
+  }
+  .result-text strong {
+    color: #d4614a;
+    font-weight: 700;
+  }
+
+  /* 装饰圆 */
+  .deco-circle {
+    position: fixed;
+    border-radius: 50%;
+    background: rgba(212,97,74,0.04);
+    z-index: 0;
+  }
+  .deco1 { width: 300px; height: 300px; top: -80px; right: -60px; }
+  .deco2 { width: 200px; height: 200px; bottom: -60px; left: -40px; }
+</style>
+</head>
+<body>
+
+<div class="deco-circle deco1"></div>
+<div class="deco-circle deco2"></div>
+
+<!-- ===== 顶部标题 ===== -->
+<div class="header">
+  <div class="header-left">
+    <h1>Q2 运营规划</h1>
+  </div>
+  <div class="header-right">
+    <div class="header-tag">核心策略：单社区跑通 → 快速复制</div>
+    <div class="header-tag">Q2目标：挑战4个社区的用户增长</div>
+  </div>
+</div>
+
+<!-- ===== 三栏主体 ===== -->
+<div class="main-layout">
+
+  <!-- ===== 左栏：项目概览 ===== -->
+  <div class="col-left">
+    <div class="section-label label-coral">
+      <span></span> 项目概览
+    </div>
+
+    <div class="card card-flex">
+      <h3><span class="icon-dot"></span><span class="h-emoji"></span> 定位与愿景</h3>
+      <ul>
+        <li>面向社区家庭的技能交易平台</li>
+        <li>愿景：百万就业，千万家庭</li>
+        <li>帮助更多技能人在家门口变现</li>
+      </ul>
+    </div>
+
+    <div class="card card-flex">
+      <h3><span class="icon-dot"></span> Q1现状</h3>
+      <div style="margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed #fce4da;">
+        <div style="font-size: 14px; font-weight: 700; color: #d4614a; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+          <span class="h-emoji"></span> 机会
+        </div>
+        <ul>
+          <li>厦门入驻服务者4370</li>
+          <li>已有43人购买会员</li>
+          <li>执行收取1%订单服务费</li>
+          <li>初步完成市场破冰</li>
+        </ul>
+      </div>
+      <div>
+        <div style="font-size: 14px; font-weight: 700; color: #cc5252; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+          <span class="h-emoji"></span> 挑战
+        </div>
+        <ul>
+          <li>效果不够稳定</li>
+          <li>尚未跑通可复制的模式</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== 中栏：运营计划（重点） ===== -->
+  <div class="col-center">
+    <div class="section-label label-rose method-header">
+      <span>运营计划 · 核心4步方法论</span>
+    </div>
+    <div class="method-legend">
+      <span class="legend-item"><span class="legend-square legend-white"></span>双边</span>
+      <span class="legend-item"><span class="legend-square legend-blue"></span>技能服务者</span>
+      <span class="legend-item"><span class="legend-square legend-coral"></span>消费者</span>
+    </div>
+
+     <!-- 4步方法论 -->
+    <div class="method-flow">
+
+      <!-- ====== 模块1：市场教育 ====== -->
+      <div class="method-module">
+        <div class="module-header mh1">
+          <div class="mh-top">
+            <span class="mh-step">STEP 01</span>
+            <svg class="mh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+          </div>
+          <div class="mh-title">市场教育</div>
+          <div class="mh-desc">平台推广</div>
+        </div>
+        <div class="sub-module">
+          <div class="sm-label"><span class="sm-dot dot1"></span>看到平台</div>
+          <div class="sm-text tag-list">
+            <span class="tag">线上渠道内容布局</span>
+            <span class="tag">线下自发或合作引流</span>
+          </div>
+        </div>
+        <div class="sub-module">
+          <div class="sm-label"><span class="sm-dot dot1"></span>了解平台</div>
+          <div class="sm-text tag-list">
+            <span class="tag tag-yellow">实现技能变现</span>
+            <span class="tag tag-pink">首个社区概念(近、多、快)</span>
+          </div>
+        </div>
+        <div class="sub-module">
+          <div class="sm-label"><span class="sm-dot dot1"></span>加入平台</div>
+          <div class="sm-text tag-list">
+            <span class="tag tag-yellow">低门槛入驻</span>
+            <span class="tag tag-pink">自主选人</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="module-arrow">›</div>
+
+      <!-- ====== 模块2：信任破冰 ====== -->
+      <div class="method-module">
+        <div class="module-header mh2">
+          <div class="mh-top">
+            <span class="mh-step">STEP 02</span>
+            <svg class="mh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <div class="mh-title">信任破冰</div>
+          <div class="mh-desc">平台交易转化</div>
+        </div>
+        <div class="sub-module">
+          <div class="sm-label"><span class="sm-dot dot2"></span>技能展示</div>
+          <div class="sm-text tag-list">
+            <span class="tag">专属主页</span>
+            <span class="tag">专属线上物料</span>
+            <span class="tag">技能案例获客</span>
+          </div>
+        </div>
+        <div class="sub-module">
+          <div class="sm-label"><span class="sm-dot dot2"></span>社区氛围</div>
+          <div class="sm-text tag-list">
+            <span class="tag">社区地理围栏</span>
+            <span class="tag">社区红黑榜</span>
+            <span class="tag">社区好价</span>
+            <span class="tag">社区发现</span>
+          </div>
+        </div>
+        <div class="sub-module">
+          <div class="sm-label"><span class="sm-dot dot2"></span>双边匹配</div>
+          <div class="sm-text tag-list">
+            <span class="tag">附近推荐</span>
+            <span class="tag">AI搜索</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="module-arrow">›</div>
+
+      <!-- ====== 模块3：习惯养成 ====== -->
+      <div class="method-module">
+        <div class="module-header mh3">
+          <div class="mh-top">
+            <span class="mh-step">STEP 03</span>
+            <svg class="mh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+          </div>
+          <div class="mh-title">习惯养成</div>
+          <div class="mh-desc">平台粘性</div>
+        </div>
+        <div class="sub-module">
+          <div class="sm-label"><span class="sm-dot dot3"></span>持续活跃</div>
+          <div class="sm-text tag-list">
+            <span class="tag tag-yellow">赚钱指南</span>
+            <span class="tag tag-yellow">消息互动</span>
+            <span class="tag tag-pink">专属福利</span>
+            <span class="tag tag-pink">技能热度榜</span>
+          </div>
+        </div>
+        <div class="sub-module">
+          <div class="sm-label"><span class="sm-dot dot3"></span>深度依赖</div>
+          <div class="sm-text tag-list">
+            <span class="tag tag-yellow">会员订阅</span>
+            <span class="tag tag-yellow">成长体系</span>
+            <span class="tag tag-yellow">情绪价值</span>
+            <span class="tag tag-pink">智能推荐</span>
+            <span class="tag tag-pink">拓展更多社区家庭场景</span>
+          </div>
+        </div>
+        <div class="sub-module">
+          <div class="sm-label"><span class="sm-dot dot3"></span>长期留存</div>
+          <div class="sm-text tag-list">
+            <span class="tag tag-yellow">技能圈交流群</span>
+            <span class="tag tag-yellow">社区荣誉</span>
+            <span class="tag tag-pink">邻里信任社群</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="module-arrow">›</div>
+
+      <!-- ====== 模块4：口碑裂变 ====== -->
+      <div class="method-module">
+        <div class="module-header mh4">
+          <div class="mh-top">
+            <span class="mh-step">STEP 04</span>
+            <svg class="mh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          </div>
+          <div class="mh-title">口碑裂变</div>
+          <div class="mh-desc">平台传播</div>
+        </div>
+        <div class="sub-module">
+          <div class="sm-label"><span class="sm-dot dot4"></span>主动分享</div>
+          <div class="sm-text tag-list">
+            <span class="tag">推荐分享</span>
+            <span class="tag">第三方渠道分享</span>
+          </div>
+        </div>
+        <div class="sub-module">
+          <div class="sm-label"><span class="sm-dot dot4"></span>圈层扩散</div>
+          <div class="sm-text tag-list">
+            <span class="tag">熟人背书</span>
+            <span class="tag">口碑种草</span>
+            <span class="tag">精准圈子触达</span>
+          </div>
+        </div>
+        <div class="sub-module">
+          <div class="sm-label"><span class="sm-dot dot4"></span>规模拉新</div>
+          <div class="sm-text tag-list">
+            <span class="tag">裂变工具</span>
+            <span class="tag">优秀案例沉淀放大</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Q2落地执行计划 -->
+    <div class="q2-plan">
+      <div class="q2-title">
+        <span class="q2-icon">Q2</span>
+        落地执行计划
+      </div>
+      <div class="q2-desc">
+        <strong>抓手：</strong>1、孵化上上吉技能KOC，构建自己的达人体系；2、形成社区口碑传播；
+      </div>
+      <div class="q2-grid">
+        <div class="q2-item">
+          <h4><span class="q2-emoji"></span> 平台推广</h4>
+        </div>
+        <div class="q2-item">
+          <h4><span class="q2-emoji"></span> 做私域</h4>
+        </div>
+        <div class="q2-item">
+          <h4><span class="q2-emoji"></span> 拉新</h4>
+        </div>
+        <div class="q2-item">
+          <h4><span class="q2-emoji"></span> 产品优化</h4>
+        </div>
+      </div>
+    </div>
+
+    <!-- 时间线 -->
+    <div class="timeline-bar">
+      <div class="t-node">
+        <div class="t-dot">5月</div>
+        <span class="t-text">完成1个社区验证</span>
+      </div>
+      <span class="t-arrow">───▸</span>
+      <div class="t-node">
+        <div class="t-dot">6月</div>
+        <span class="t-text">复制拓展3个社区</span>
+      </div>
+      <span class="t-arrow">───▸</span>
+      <div class="t-node">
+        <div class="t-dot">Q3</div>
+        <span class="t-text">可持续复制更多社区</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 右栏：目标 ===== -->
+  <div class="col-right">
+    <div class="section-label label-warm">
+      <span></span> Q2目标
+    </div>
+
+    <div class="result-card flex1">
+      <h3><span class="r-dot" style="background:#e8795e;"></span> 用户增长</h3>
+      <div class="metric-row">
+        <span class="m-label">平台UV增长</span>
+        <span class="m-value mv-coral">1万+</span>
+      </div>
+      <div class="metric-row">
+        <span class="m-label">入驻增长</span>
+        <span class="m-value mv-coral">1000+</span>
+      </div>
+
+    </div>
+
+    <div class="result-card flex1">
+      <h3><span class="r-dot" style="background:#e06868;"></span> 转化成交</h3>
+      <div class="metric-row">
+        <span class="m-label">真实订单新增</span>
+        <span class="m-value mv-rose">200+</span>
+      </div>
+      <div class="metric-row">
+        <span class="m-label">会员购买增加</span>
+        <span class="m-value mv-rose">50+</span>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <h3><span class="r-dot" style="background:#c97dbd;"></span> 用户留存</h3>
+      <div class="metric-row">
+        <span class="m-label">私域用户留存</span>
+        <span class="m-value mv-purple">500+</span>
+      </div>
+    </div>
+
+    <div class="result-card flex1">
+      <h3><span class="r-dot" style="background:#d97a45;"></span> 核心产出</h3>
+      <div class="metric-row">
+        <span class="m-label">可复制的运营打法</span>
+        <span class="m-value mv-warm">1套</span>
+      </div>
+      <div class="metric-row">
+        <span class="m-label">标准化的产品闭环</span>
+        <span class="m-value mv-warm">1个</span>
+      </div>
+      <div class="metric-row">
+        <span class="m-label">成功的技能者案例</span>
+        <span class="m-value mv-warm">10个</span>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>
