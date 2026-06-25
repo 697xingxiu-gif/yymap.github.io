@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Q2运营规划</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
@@ -21,18 +21,34 @@
     }
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  html { margin: 0; padding: 0; }
+  html { margin: 0; padding: 0; overflow: hidden; }
   body {
-    width: 420mm;            /* A3 横版宽（≈1587px @96dpi） */
-    height: 297mm;           /* A3 横版高（≈1123px @96dpi） */
+    width: 420mm;
+    height: 297mm;
     margin: 0 auto;
     font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
     background: linear-gradient(145deg, #fff8f5 0%, #fef0ec 25%, #fde8e0 50%, #fce4da 75%, #f9d8cc 100%);
-    overflow: hidden;        /* 锁死在一页 A3 内，不产生滚动/分页 */
+    overflow: visible;
     padding: 22px 36px 24px;
     color: #4a3530;
-    display: flex;           /* 让 header + main-layout 纵向自适应分配空间 */
+    display: flex;
     flex-direction: column;
+  }
+  .page-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background: #f5f5f5;
+  }
+  .page-scaler {
+    transform-origin: center center;
+    transition: transform 0.3s ease;
   }
 
   /* ===== 顶部标题区 ===== */
@@ -654,6 +670,41 @@
   .deco1 { width: 300px; height: 300px; top: -80px; right: -60px; }
   .deco2 { width: 200px; height: 200px; bottom: -60px; left: -40px; }
 </style>
+<script>
+// 浏览器中自动缩放页面
+(function() {
+  function scalePage() {
+    // 检测是否为打印预览
+    if (window.matchMedia && window.matchMedia('print').matches) {
+      document.body.style.transform = '';
+      document.body.style.transformOrigin = '';
+      return;
+    }
+
+    // A3尺寸 (mm to px, assuming 96dpi)
+    var pageWidth = 420 * 96 / 25.4;
+    var pageHeight = 297 * 96 / 25.4;
+
+    // 计算缩放比例
+    var scaleX = window.innerWidth / pageWidth;
+    var scaleY = window.innerHeight / pageHeight;
+    var scale = Math.min(scaleX, scaleY) * 0.95; // 0.95留边距
+
+    // 应用缩放
+    document.body.style.transform = 'scale(' + scale + ')';
+    document.body.style.transformOrigin = 'center center';
+    document.body.style.width = pageWidth + 'px';
+    document.body.style.height = pageHeight + 'px';
+  }
+
+  // 初始加载
+  scalePage();
+
+  // 窗口大小改变时重新缩放
+  window.addEventListener('resize', scalePage);
+  window.addEventListener('load', scalePage);
+})();
+</script>
 </head>
 <body>
 
